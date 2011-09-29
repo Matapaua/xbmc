@@ -56,6 +56,7 @@ cp .libs/avcodec-53.dll /xbmc/system/players/dvdplayer/ &&
 cp .libs/avformat-53.dll /xbmc/system/players/dvdplayer/ &&
 cp .libs/avutil-51.dll /xbmc/system/players/dvdplayer/ &&
 cp .libs/avfilter-2.dll /xbmc/system/players/dvdplayer/ &&
+cp .libs/avdevice-53.dll /xbmc/system/players/dvdplayer/ &&
 cp .libs/postproc-52.dll /xbmc/system/players/dvdplayer/ &&
 cp .libs/swresample-0.dll /xbmc/system/players/dvdplayer/ &&
 cp .libs/swscale-2.dll /xbmc/system/players/dvdplayer/

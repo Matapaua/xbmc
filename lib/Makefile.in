@@ -10,6 +10,7 @@ AVFORMAT_SO=avformat-53-$(ARCH).so
 AVCODEC_SO=avcodec-53-$(ARCH).so
 AVUTIL_SO=avutil-51-$(ARCH).so
 AVFILTER_SO=avfilter-2-$(ARCH).so
+AVDEVICE_SO=avdevice-53-$(ARCH).so
 SWSCALE_SO=swscale-2-$(ARCH).so
 POSTPROC_SO=postproc-52-$(ARCH).so
 SWRESAMPLE_SO=swresample-0-$(ARCH).so
@@ -26,6 +27,7 @@ ifneq (@USE_EXTERNAL_FFMPEG@,1)
 	$(AVFORMAT_SO) \
 	$(POSTPROC_SO) \
 	$(AVFILTER_SO) \
+	$(AVDEVICE_SO) \
 	$(SWSCALE_SO) \
 	$(SWRESAMPLE_SO)
 endif
@@ -47,6 +49,9 @@ $(SYSDIR)/$(AVFORMAT_SO): ffmpeg/libavformat/libavformat.so
 
 $(SYSDIR)/$(AVFILTER_SO): ffmpeg/libavfilter/libavfilter.so
 	cp ffmpeg/libavfilter/libavfilter.so $@
+	
+$(SYSDIR)/$(AVDEVICE_SO): ffmpeg/libavdevice/libavdevice.so
+	cp ffmpeg/libavdevice/libavdevice.so $@	
 
 $(SYSDIR)/$(SWSCALE_SO): ffmpeg/libswscale/libswscale.so
 	cp ffmpeg/libswscale/libswscale.so $@
@@ -61,6 +66,7 @@ ffmpeg/libavutil/libavutil.so     : ffmpeg;
 ffmpeg/libavcodec/libavcodec.so   : ffmpeg;
 ffmpeg/libavformat/libavformat.so : ffmpeg;
 ffmpeg/libavfilter/libavfilter.so : ffmpeg;
+ffmpeg/libavdevice/libavdevice.so : ffmpeg;
 ffmpeg/libswscale/libswscale.so   : ffmpeg;
 ffmpeg/libpostproc/libpostproc.so : ffmpeg;
 ffmpeg/libswresample/libswresample.so : ffmpeg;

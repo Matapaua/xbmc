@@ -80,6 +80,7 @@
 #define DLL_PATH_LIBPOSTPROC   "special://xbmcbin/system/players/dvdplayer/postproc-52-@ARCH@.so"
 #define DLL_PATH_LIBSWSCALE    "special://xbmcbin/system/players/dvdplayer/swscale-2-@ARCH@.so"
 #define DLL_PATH_LIBAVFILTER   "special://xbmcbin/system/players/dvdplayer/avfilter-2-@ARCH@.so"
+#define DLL_PATH_LIBAVDEVICE   "special://xbmcbin/system/players/dvdplayer/avdevice-53-@ARCH@.so"
 #define DLL_PATH_LIBSWRESAMPLE "special://xbmcbin/system/players/dvdplayer/swresample-0-@ARCH@.so"
 
 /* cdrip */
