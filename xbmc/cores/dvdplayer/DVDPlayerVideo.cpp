@@ -1192,6 +1192,10 @@ int CDVDPlayerVideo::OutputPicture(const DVDVideoPicture* src, double pts)
         formatstr = "NONE";
         buffering = false;
         break;
+      case RENDER_FMT_XVBA:
+        formatstr = "XVBA";
+        buffering = true;
+        break;
     }
 
     if(m_bAllowFullscreen)
