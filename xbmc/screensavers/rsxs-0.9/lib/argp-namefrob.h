@@ -17,7 +17,7 @@
    with this program; if not, write to the Free Software Foundation,
    Inc., 51 Franklin Street, Fifth Floor, Boston, MA 02110-1301, USA. */
 
-#if !_LIBC
+#if 0
 /* This code is written for inclusion in gnu-libc, and uses names in the
    namespace reserved for libc.  If we're not compiling in libc, define those
    names to be the normal ones instead.  */
