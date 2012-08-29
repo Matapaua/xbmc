@@ -335,11 +335,9 @@ void XBPython::Initialize()
       // at http://docs.python.org/using/cmdline.html#environment-variables
 
 #if !defined(_WIN32)
-      /* PYTHONOPTIMIZE is set off intentionally when using external Python.
-         Reason for this is because we cannot be sure what version of Python
-         was used to compile the various Python object files (i.e. .pyo,
-         .pyc, etc.). */
-        // check if we are running as real xbmc.app or just binary
+      // Required for python to find optimized code (pyo) files
+      setenv("PYTHONOPTIMIZE", "1", 1);
+      // check if we are running as real xbmc.app or just binary
       if (!CUtil::GetFrameworksPath(true).IsEmpty())
       {
         // using external python, it's build looking for xxx/lib/python2.6
