@@ -138,6 +138,7 @@ namespace PYXBMC
     initAction_Type();
     initControlRadioButton_Type();
     initControlEdit_Type();
+    initControlToggle_Type();
 
     if (PyType_Ready(&Window_Type) < 0 ||
         PyType_Ready(&WindowDialog_Type) < 0 ||
@@ -160,7 +161,8 @@ namespace PYXBMC
         PyType_Ready(&ControlSlider_Type) < 0 ||
         PyType_Ready(&ControlRadioButton_Type) < 0 ||
         PyType_Ready(&ControlEdit_Type) < 0 ||
-        PyType_Ready(&Action_Type) < 0)
+        PyType_Ready(&Action_Type) < 0 ||
+        PyType_Ready(&ControlToggle_Type) < 0)
       return;
 
   }
@@ -200,6 +202,7 @@ namespace PYXBMC
     Py_INCREF(&Action_Type);
     Py_INCREF(&ControlRadioButton_Type);
     Py_INCREF(&ControlEdit_Type);
+    Py_INCREF(&ControlToggle_Type);
 
     pXbmcGuiModule = Py_InitModule3((char*)"xbmcgui", xbmcGuiMethods, xbmcgui_module_documentation);
 
@@ -227,7 +230,8 @@ namespace PYXBMC
     PyModule_AddObject(pXbmcGuiModule, (char*)"Action", (PyObject *)&Action_Type);
     PyModule_AddObject(pXbmcGuiModule, (char*)"ControlRadioButton", (PyObject*)&ControlRadioButton_Type);
     PyModule_AddObject(pXbmcGuiModule, (char*)"ControlEdit", (PyObject*)&ControlEdit_Type);
-
+    PyModule_AddObject(pXbmcGuiModule, (char*)"ControlToggle", (PyObject*)&ControlToggle_Type);
+    
     PyModule_AddStringConstant(pXbmcGuiModule, (char*)"__author__", (char*)PY_XBMC_AUTHOR);
     PyModule_AddStringConstant(pXbmcGuiModule, (char*)"__date__", (char*)"14 July 2006");
     PyModule_AddStringConstant(pXbmcGuiModule, (char*)"__version__", (char*)"1.2");

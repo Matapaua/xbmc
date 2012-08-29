@@ -135,6 +135,11 @@ namespace PYXBMC
 
   typedef struct {
     PyObject_HEAD_XBMC_CONTROL
+    bool bIsSelected;
+  } ControlToggle;  
+  
+  typedef struct {
+    PyObject_HEAD_XBMC_CONTROL
     std::string strFont;
     color_t textColor;
     std::vector<std::string> vecLabels;
@@ -263,7 +268,8 @@ namespace PYXBMC
   extern PyTypeObject ControlRadioButton_Type;
   extern PyTypeObject ControlSlider_Type;
   extern PyTypeObject ControlEdit_Type;
-
+  extern PyTypeObject ControlToggle_Type;
+  
   CGUIControl* ControlLabel_Create(ControlLabel* pControl);
   CGUIControl* ControlFadeLabel_Create(ControlFadeLabel* pControl);
   CGUIControl* ControlTextBox_Create(ControlTextBox* pControl);
@@ -276,6 +282,7 @@ namespace PYXBMC
   CGUIControl* ControlRadioButton_Create(ControlRadioButton* pControl);
   CGUIControl* ControlSlider_Create(ControlSlider* pControl);
   CGUIControl* ControlEdit_Create(ControlEdit* pControl);
+  CGUIControl* ControlToggle_Create(ControlToggle* pControl);
 
   void initControl_Type();
   void initControlSpin_Type();
@@ -291,6 +298,7 @@ namespace PYXBMC
   void initControlRadioButton_Type();
   void initControlSlider_Type();
   void initControlEdit_Type();
+  void initControlToggle_Type();
 }
 
 #ifdef __cplusplus

@@ -57,6 +57,7 @@ public:
   virtual CStdString GetDescription() const;
   void SetToggleSelect(const CStdString &toggleSelect);
   void SetAltClickActions(const CGUIAction &clickActions);
+  bool IsSelected() const { return m_bSelected; };
 
 protected:
   virtual bool UpdateColors();

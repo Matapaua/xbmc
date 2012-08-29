@@ -277,6 +277,12 @@ namespace PYXBMC
       if (li.font) ((ControlEdit*)pControl)->strFont = li.font->GetFontName();
       ((ControlButton*)pControl)->align = li.align;
       break;
+    case CGUIControl::GUICONTROL_TOGGLEBUTTON:
+      pControl = (Control*)ControlToggle_Type.tp_alloc(&ControlToggle_Type, 0);
+      new(&((ControlToggle*)pControl)->bIsSelected) bool();       
+        
+      break;  
+        
     default:
       break;
     }
