@@ -2103,6 +2103,7 @@ XB_CONFIG_MODULE([lib/ffmpeg], [
       --disable-ffmpeg \
       --disable-doc \
       --disable-decoder=mpeg_xvmc \
+      --disable-crystalhd \
       --enable-postproc \
       --enable-gpl \
       --enable-protocol=http \
@@ -2143,6 +2144,7 @@ XB_CONFIG_MODULE([lib/ffmpeg], [
       --disable-ffplay \
       --disable-ffserver \
       --disable-ffmpeg \
+      --disable-crystalhd \
       --enable-shared \
       --disable-doc \
       --enable-postproc \
