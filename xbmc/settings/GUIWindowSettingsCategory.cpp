@@ -564,7 +564,7 @@ void CGUIWindowSettingsCategory::UpdateSettings()
     {
       bool hasInterop = false;
 #ifdef GL_NV_vdpau_interop
-      hasInterop = true;
+      hasInterop = false;
 #endif
       CGUIControl *pControl = (CGUIControl *)GetControl(pSettingControl->GetID());
       if (pControl && hasInterop && glewIsSupported("GL_NV_vdpau_interop"))
