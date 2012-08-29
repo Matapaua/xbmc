@@ -56,17 +56,17 @@ if test "$echo_prefix" = "yes"; then
 fi
 
 if test "$echo_cflags" = "yes"; then
-      echo -I$prefix/include $dvdread_cflags $extracflags $threadcflags
+      echo $dvdread_cflags $extracflags $threadcflags
 fi
 
 if test "$echo_minicflags" = "yes"; then
-      echo -I$prefix/include -I$prefix/include/dvdnav $extracflags $threadcflags
+      echo $extracflags $threadcflags
 fi
 
 if test "$echo_libs" = "yes"; then
-      echo -L$libdir -ldvdnav $dvdread_libs $threadlib
+      echo -ldvdnav $dvdread_libs $threadlib
 fi      
 
 if test "$echo_minilibs" = "yes"; then
-      echo -L$libdir -ldvdnavmini $threadlib
+      echo -ldvdnavmini $threadlib
 fi

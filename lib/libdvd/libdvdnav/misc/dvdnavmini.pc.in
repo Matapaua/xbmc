@@ -7,5 +7,5 @@ Name: libdvdnavmini
 Description: DVD Navigation mini library
 Version: @VERSION@
 
-Cflags: -I${includedir} @DVDREAD_CFLAGS@ @THREAD_CFLAGS@
-Libs: -L${libdir} -ldvdnav @THREAD_LIBS@
+Cflags: @DVDREAD_CFLAGS@ @THREAD_CFLAGS@
+Libs: -ldvdnav @THREAD_LIBS@

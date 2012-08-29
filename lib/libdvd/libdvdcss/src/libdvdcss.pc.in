@@ -6,5 +6,5 @@ includedir=@includedir@
 Name: libdvdcss
 Description: DVD access and decryption library.
 Version: @VERSION@
-Libs: -L${libdir} -ldvdcss
-Cflags: -I{includedir} -I${includedir}/@PACKAGE@
+Libs: -ldvdcss
+Cflags: -I.

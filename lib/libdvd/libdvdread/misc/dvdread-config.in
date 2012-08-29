@@ -72,9 +72,9 @@ if test "$echo_exec_prefix" = "yes"; then
 fi
 
 if test "$echo_cflags" = "yes"; then
-      echo -I@includedir@
+      echo ""
 fi
 
 if test "$echo_libs" = "yes"; then
-      echo -L@libdir@ -ldvdread
+      echo -ldvdread
 fi

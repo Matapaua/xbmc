@@ -48,9 +48,9 @@ if test "$echo_prefix" = "yes"; then
 fi
 
 if test "$echo_cflags" = "yes"; then
-      echo -I$prefix/include $extracflags
+      echo $extracflags
 fi
 
 if test "$echo_libs" = "yes"; then
-      echo -L$libdir $dvdreadlib
+      echo $dvdreadlib
 fi      
