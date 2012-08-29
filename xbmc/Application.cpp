@@ -2549,8 +2549,8 @@ bool CApplication::OnAction(const CAction &action)
       if (!m_pPlayer->IsPaused())
       { // unpaused - set the playspeed back to normal
         SetPlaySpeed(1);
+        g_audioManager.Enable(m_pPlayer->IsPaused() && !g_audioContext.IsPassthroughActive());
       }
-      g_audioManager.Enable(m_pPlayer->IsPaused() && !g_audioContext.IsPassthroughActive());
       return true;
     }
     if (!m_pPlayer->IsPaused())
