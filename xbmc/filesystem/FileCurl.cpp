@@ -798,9 +798,9 @@ bool CFileCurl::Download(const CStdString& strURL, const CStdString& strFileName
 // Detect whether we are "online" or not! Very simple and dirty!
 bool CFileCurl::IsInternet(bool checkDNS /* = true */)
 {
-  CStdString strURL = "http://www.google.com";
+  CStdString strURL = "http://www.openelec.tv";
   if (!checkDNS)
-    strURL = "http://74.125.19.103"; // www.google.com ip
+    strURL = "http://212.101.13.10"; // www.openelec.tv ip
 
   bool found = Exists(strURL);
   Close();
