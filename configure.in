@@ -1301,6 +1301,9 @@ else
   AC_MSG_NOTICE($external_ffmpeg_disabled)
   USE_EXTERNAL_FFMPEG=0
   AC_DEFINE([PIX_FMT_VDPAU_MPEG4_IN_AVUTIL], [1], [Whether AVUtil defines PIX_FMT_VDPAU_MPEG4.])
+
+  # check for yasm
+  AC_CHECK_PROG(HAVE_YASM,yasm,"yes","no",)
 fi
 
 # Python
@@ -2098,6 +2101,7 @@ XB_CONFIG_MODULE([lib/ffmpeg], [
       `if test "$use_cpu" != "no"; then echo --cpu=$use_cpu; fi`\
       `if test "$use_neon" = "yes"; then echo --enable-neon; else echo --disable-neon; fi`\
       --target-os=$(tolower $(uname -s)) \
+      `if test "$HAVE_YASM" = "yes"; then echo --enable-yasm; fi` \
       --disable-muxers \
       --enable-muxer=spdif \
       --enable-muxer=adts \
