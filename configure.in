@@ -517,6 +517,14 @@ case $host in
 esac
 AC_SUBST([ARCH])
 
+AC_CHECK_PROG(HAVE_GIT,git,"yes","no",)
+if test "$HAVE_GIT" = "yes" -a "$GIT_REV" = ""; then
+  GIT_REV=$(git --no-pager log --abbrev=7 -n 1 --pretty=format:"%h %ci" HEAD | awk '{gsub("-", "");print $2"-"$1}')
+elif test "$GIT_REV" = ""; then
+  GIT_REV="Unknown"
+fi
+final_message="$final_message\n  git Rev.:\t${GIT_REV}"
+
 # platform debug flags
 if test "$use_debug" = "yes"; then
   final_message="$final_message\n  Debugging:\tYes"
@@ -1502,7 +1510,6 @@ if test "$ARCH" = "i486-linux" || test "$ARCH" = "x86-freebsd"; then
   fi
 fi
 
-AC_CHECK_PROG(HAVE_GIT,git,"yes","no",)
 
 # Checks for header files.
 AC_HEADER_DIRENT
@@ -1747,12 +1754,6 @@ else
   final_message="$final_message\n  Avahi:\tNo"
 fi
 
-if test "$HAVE_GIT" = "yes"; then
-  GIT_REV=$(git --no-pager log --abbrev=7 -n 1 --pretty=format:"%h %ci" HEAD | awk '{gsub("-", "");print $2"-"$1}')
-fi
-if test "$GIT_REV" = ""; then
-  GIT_REV="Unknown"
-fi
 if test "$host_vendor" = "apple"; then
   echo "#define GIT_REV \"$GIT_REV\"" > git_revision.h
 else
