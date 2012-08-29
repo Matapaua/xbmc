@@ -28,7 +28,11 @@
 #include "CDDAReader.h"
 #include "utils/StringUtils.h"
 #include "Util.h"
+
+#ifdef HAVE_LIBMP3LAME
 #include "EncoderLame.h"
+#endif
+
 #include "EncoderWav.h"
 #include "EncoderVorbis.h"
 #include "EncoderFFmpeg.h"
@@ -79,9 +83,16 @@ bool CCDDARipper::Init(const CStdString& strTrackFile, const CStdString& strFile
   case CDDARIP_ENCODER_FLAC:
     m_pEncoder = new CEncoderFlac();
     break;
-  default:
+#ifdef HAVE_LIBMP3LAME
+  case CDDARIP_ENCODER_LAME:
     m_pEncoder = new CEncoderLame();
     break;
+#else
+  default:
+    CLog::Log(LOGERROR,"invalid encoder selected");
+    return false;
+    break;
+#endif
   }
 
   // we have to set the tags before we init the Encoder

@@ -3,9 +3,12 @@ SRCS=CDDARipper.cpp \
      Encoder.cpp \
      EncoderFFmpeg.cpp \
      EncoderFlac.cpp \
-     EncoderLame.cpp \
      EncoderVorbis.cpp \
      EncoderWav.cpp \
+
+ifeq (@HAVE_LIBMP3LAME@,1)
+  SRCS+=EncoderLame.cpp
+endif
 
 LIB=cdrip.a
 
