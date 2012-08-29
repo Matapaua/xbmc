@@ -27,7 +27,7 @@
 #include "../../lib/c++/xbmcclient.h"
 #endif
 //#ifndef WIN32
-//	#include <unistd.h>
+	#include <unistd.h>
 //#endif
 #include "wiiuse.h"
 //#define ICON_PATH "../../"
