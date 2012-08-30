@@ -235,6 +235,13 @@ bool CXBMCRenderManager::Configure(unsigned int width, unsigned int height, unsi
     return false;
   }
 
+  // check if decoder supports buffering
+  m_bCodecSupportsBuffering = false;
+  if (format == DVDVideoPicture::FMT_VDPAU
+     || format == DVDVideoPicture::FMT_VDPAU_420
+     || format == DVDVideoPicture::FMT_XVBA)
+    m_bCodecSupportsBuffering = true;
+
   bool result = m_pRenderer->Configure(width, height, d_width, d_height, fps, flags, format);
   if(result)
   {
@@ -249,7 +256,7 @@ bool CXBMCRenderManager::Configure(unsigned int width, unsigned int height, unsi
     m_bReconfigured = true;
     m_presentstep = PRESENT_IDLE;
     m_presentevent.Set();
-//    ResetRenderBuffer();
+    ResetRenderBuffer();
   }
 
   return result;
@@ -294,8 +301,6 @@ void CXBMCRenderManager::RenderUpdate(bool clear, DWORD flags, DWORD alpha)
     }
   }
 
-//  CLog::Log(LOGNOTICE,"------ current: %d", m_iCurrentRenderBuffer);
-
   if (g_advancedSettings.m_videoDisableBackgroundDeinterlace)
   {
     CSharedLock lock(m_sharedSection);
@@ -334,17 +339,10 @@ unsigned int CXBMCRenderManager::PreInit(CDVDClock *pClock)
 
   UpdateDisplayLatency();
 
-  m_swapCount = 1;
-//  std::string Vendor = g_Windowing.GetRenderVendor();
-//  std::transform(Vendor.begin(), Vendor.end(), Vendor.begin(), ::tolower);
-//  if (Vendor.compare(0, 3, "ati") == 0)
-//  {
-//    m_swapCount = 2;
-//  }
-  ResetRenderBuffer();
   m_bUseBuffering = false;
-  m_overlays.SetNumBuffers(m_iNumRenderBuffers);
-  m_pRenderer->SetProcessorSize(m_iNumRenderBuffers);
+  m_bCodecSupportsBuffering = true;
+  ResetRenderBuffer();
+
   return m_pRenderer->PreInit();
 }
 
@@ -680,8 +678,6 @@ void CXBMCRenderManager::Present()
     WaitPresentTime(m_presenttime);
 
   m_presentevent.Set();
-
-  m_rendertime = CurrentHostCounter();
 }
 
 /* simple present method */
@@ -915,9 +911,9 @@ bool CXBMCRenderManager::HasFreeBuffer()
       return true;
   }
 
-  int outputPlusSwap = (m_iOutputRenderBuffer + m_swapCount) % m_iNumRenderBuffers;
+  int outputPlus1 = (m_iOutputRenderBuffer + 1) % m_iNumRenderBuffers;
   if ((m_iOutputRenderBuffer == m_iDisplayedRenderBuffer && !m_bAllRenderBuffersDisplayed)
-     || outputPlusSwap == m_iCurrentRenderBuffer)
+     || outputPlus1 == m_iCurrentRenderBuffer)
     return false;
   else
     return true;
@@ -925,15 +921,23 @@ bool CXBMCRenderManager::HasFreeBuffer()
 
 void CXBMCRenderManager::ResetRenderBuffer()
 {
-  m_iNumRenderBuffers = 5;
+  m_iNumRenderBuffers = m_pRenderer->GetMaxProcessorSize();
+  m_iNumRenderBuffers = std::min(5, m_iNumRenderBuffers);
+  m_iNumRenderBuffers = std::max(2, m_iNumRenderBuffers);
+
+  if (!m_bCodecSupportsBuffering)
+    m_iNumRenderBuffers = 2;
+
+  CLog::Log(LOGNOTICE,"CXBMCRenderManager::ResetRenderBuffer - using %d render buffers", m_iNumRenderBuffers);
+  m_overlays.SetNumBuffers(m_iNumRenderBuffers);
+  m_pRenderer->SetProcessorSize(m_iNumRenderBuffers);
+
   m_iCurrentRenderBuffer = 0;
-  m_iFlipRequestRenderBuffer = 0;
   m_iOutputRenderBuffer = 0;
   m_iDisplayedRenderBuffer = 0;
   m_bAllRenderBuffersDisplayed = true;
   m_sleeptime = 1.0;
   m_presentPts = DVD_NOPTS_VALUE;
-//  m_bUseBuffering = true;
   m_speed = 0;
 }
 
@@ -943,8 +947,8 @@ void CXBMCRenderManager::PrepareNextRender()
   if (idx < 0)
   {
     if (m_speed >= DVD_PLAYSPEED_NORMAL && g_graphicsContext.IsFullScreenVideo())
-      CLog::Log(LOGNOTICE,"----------- no buffer, out: %d, current: %d, display: %d",
-        m_iOutputRenderBuffer, m_iCurrentRenderBuffer, m_iDisplayedRenderBuffer);
+      CLog::Log(LOGDEBUG,"%s no buffer, out: %d, current: %d, display: %d",
+        __FUNCTION__, m_iOutputRenderBuffer, m_iCurrentRenderBuffer, m_iDisplayedRenderBuffer);
     return;
   }
 
@@ -962,16 +966,6 @@ void CXBMCRenderManager::PrepareNextRender()
 
   m_sleeptime = presenttime - clocktime;
 
-//  double interval;
-//  if (g_VideoReferenceClock.GetRefreshRate(&interval) > 0)
-//  {
-//    if (m_swaptime > interval * 0.7)
-//    {
-//      presenttime += interval;
-//      CLog::Log(LOGDEBUG,"------------  very long swaptime");
-//    }
-//  }
-
   if (g_graphicsContext.IsFullScreenVideo() || presenttime <= clocktime+0.01)
   {
     m_presentPts = m_renderBuffers[idx].pts;
@@ -986,6 +980,10 @@ void CXBMCRenderManager::PrepareNextRender()
 void CXBMCRenderManager::EnableBuffering(bool enable)
 {
   CRetakeLock<CExclusiveLock> lock(m_sharedSection);
+
+  if (m_iNumRenderBuffers < 3)
+    return;
+
   m_bUseBuffering = enable;
   if (!m_bUseBuffering)
     m_iOutputRenderBuffer = m_iCurrentRenderBuffer;
@@ -1005,28 +1003,11 @@ void CXBMCRenderManager::NotifyDisplayFlip()
   if (!m_pRenderer)
     return;
 
-//  if (g_graphicsContext.IsFullScreenVideo())
-//  {
-//    uint64_t diff = CurrentHostCounter() - m_rendertime;
-//    m_swaptime = ((double)(diff))/CurrentHostFrequency();
-//    int waittime = (int)((diff*1000LL)/CurrentHostFrequency());
-//    if (waittime > 15)
-//    {
-//      CLog::Log(LOGNOTICE,"------------------ wait swap buffers: %f, sleep: %f", m_swaptime, m_sleeptime);
-//    }
-//  }
+  if (m_iNumRenderBuffers < 3)
+    return;
 
   int last = m_iDisplayedRenderBuffer;
-  m_iDisplayedRenderBuffer = (m_iCurrentRenderBuffer + m_iNumRenderBuffers - m_swapCount) % m_iNumRenderBuffers;
-  m_iFlipRequestRenderBuffer = m_iCurrentRenderBuffer;
-
-//  // we have caught up with output so all buffers are re-usable
-//  if (last != m_iDisplayedRenderBuffer
-//      && m_iDisplayedRenderBuffer == m_iOutputRenderBuffer)
-//  {
-//    CLog::Log(LOGNOTICE,"-------------- all displayed");
-//    m_bAllRenderBuffersDisplayed = true;
-//  }
+  m_iDisplayedRenderBuffer = (m_iCurrentRenderBuffer + m_iNumRenderBuffers - 1) % m_iNumRenderBuffers;
 
   if (last != m_iDisplayedRenderBuffer
       && m_iDisplayedRenderBuffer != m_iCurrentRenderBuffer)
@@ -1044,7 +1025,10 @@ bool CXBMCRenderManager::GetStats(double &sleeptime, double &pts, int &bufferLev
   CSharedLock lock(m_sharedSection);
   sleeptime = m_sleeptime;
   pts = m_presentPts;
-  bufferLevel = (m_iOutputRenderBuffer - m_iCurrentRenderBuffer + m_iNumRenderBuffers) % m_iNumRenderBuffers;
+  if (m_iNumRenderBuffers < 3)
+    bufferLevel = -1;
+  else
+    bufferLevel = (m_iOutputRenderBuffer - m_iCurrentRenderBuffer + m_iNumRenderBuffers) % m_iNumRenderBuffers;
   return true;
 }
 

@@ -43,7 +43,7 @@ class CDVDClock;
 
 namespace DXVA { class CProcessor; }
 namespace VAAPI { class CSurfaceHolder; }
-namespace VDPAU { struct CVdpauRenderPicture; }
+namespace VDPAU { class CVdpauRenderPicture; }
 struct DVDVideoPicture;
 
 #define ERRORBUFFSIZE 30
@@ -242,23 +242,17 @@ protected:
   //              displayed or even rendered).
   // Current:     is the current buffer being or having been submitted for render to back buffer.
   //              Cannot go past "Output" buffer (else it would be rendering old output).
-  // FlipRequest: is the render buffer that has last been submitted for render AND importantly has had
-  //              swap-buffer flip subsequently invoked (thus flip to front buffer is requested for vblank
-  //              subsequent to render completion).
   // Displayed:   is the buffer that is now considered to be safely copied from back buffer to front buffer
   //              (we assume that after two swap-buffer flips for the same "Current" render buffer that that
   //              buffer will be safe, but otherwise we consider that only the previous-to-"Current" is guaranteed).
-  // Last:        is the last buffer successfully submitted for render to back buffer (purpose: to rollback to in
-  //              unexpected case where a texture render fails).
 
   int m_iCurrentRenderBuffer;
   int m_iNumRenderBuffers;
-//  int m_iLastRenderBuffer;
-  int m_iFlipRequestRenderBuffer;
   int m_iOutputRenderBuffer;
   int m_iDisplayedRenderBuffer;
   bool m_bAllRenderBuffersDisplayed;
   bool m_bUseBuffering;
+  bool m_bCodecSupportsBuffering;
   int m_speed;
   CEvent m_flipEvent;
 
@@ -284,9 +278,7 @@ protected:
   CEvent     m_presentevent;
   CEvent     m_flushEvent;
   CDVDClock  *m_pClock;
-  uint64_t   m_rendertime;
-  double     m_swaptime;
-  unsigned int m_swapCount;
+
 
   OVERLAY::CRenderer m_overlays;
 

@@ -145,6 +145,7 @@ public:
   virtual void         Flush();
   virtual void         ReleaseBuffer(int idx);
   virtual void         SetProcessorSize(int numBuffers) { m_NumYV12Buffers = numBuffers; }
+  virtual unsigned int GetMaxProcessorSize() { return NUM_BUFFERS; }
   virtual unsigned int GetProcessorSize() { return m_NumYV12Buffers; }
 
 #ifdef HAVE_LIBVDPAU
@@ -328,6 +329,7 @@ protected:
   bool  m_nonLinStretch;
   bool  m_nonLinStretchGui;
   float m_pixelRatio;
+  bool  m_skipRender;
 };
 
 

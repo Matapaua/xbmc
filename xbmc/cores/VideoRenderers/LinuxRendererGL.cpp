@@ -77,7 +77,6 @@
 using namespace Shaders;
 
 static const GLubyte stipple_weave[] = {
-  0xFF, 0xFF, 0xFF, 0xFF,
   0x00, 0x00, 0x00, 0x00,
   0xFF, 0xFF, 0xFF, 0xFF,
   0x00, 0x00, 0x00, 0x00,
@@ -110,6 +109,7 @@ static const GLubyte stipple_weave[] = {
   0xFF, 0xFF, 0xFF, 0xFF,
   0x00, 0x00, 0x00, 0x00,
   0xFF, 0xFF, 0xFF, 0xFF,
+  0x00, 0x00, 0x00, 0x00,
 };
 
 CLinuxRendererGL::YUVBUFFER::YUVBUFFER()
@@ -246,11 +246,6 @@ bool CLinuxRendererGL::ValidateRenderTarget()
     }
     else
       CLog::Log(LOGNOTICE,"Using GL_TEXTURE_2D");
-
-    // function pointer for texture might change in
-    // call to LoadShaders
-    for (int i = 0 ; i < m_NumYV12Buffers ; i++)
-      (this->*m_textureDelete)(i);
 
     // function pointer for texture might change in
     // call to LoadShaders
@@ -633,8 +628,6 @@ void CLinuxRendererGL::RenderUpdate(bool clear, DWORD flags, DWORD alpha)
       index = m_iYV12RenderBuffer;
     }
   }
-  else
-    m_iLastRenderBuffer = index;
 
   if (clear)
   {
@@ -749,6 +742,8 @@ void CLinuxRendererGL::DrawBlackBars()
 void CLinuxRendererGL::FlipPage(int source)
 {
   UnBindPbo(m_buffers[m_iYV12RenderBuffer]);
+
+  m_iLastRenderBuffer = m_iYV12RenderBuffer;
 
   if( source >= 0 && source < m_NumYV12Buffers )
     m_iYV12RenderBuffer = source;
@@ -1147,7 +1142,10 @@ void CLinuxRendererGL::Render(DWORD flags, int renderBuffer)
     m_currentField = FIELD_FULL;
 
   // call texture load function
+  m_skipRender = false;
   (this->*m_textureUpload)(renderBuffer);
+  if (m_skipRender)
+    return;
 
   if (m_renderMethod & RENDER_GLSL)
   {
@@ -2332,16 +2330,13 @@ void CLinuxRendererGL::UploadVDPAUTexture(int index)
   YUVFIELDS &fields = m_buffers[index].fields;
   YUVPLANE &plane = fields[0][0];
 
-  if (!vdpau)
+  if (!vdpau || !vdpau->valid)
   {
-    fields[0][1].id = plane.id;
     m_eventTexturesDone[index]->Set();
-    CLog::Log(LOGWARNING,"--------- no vdpau texture, index: %d", index);
+    m_skipRender = true;
     return;
   }
 
-//  CLog::Log(LOGNOTICE,"-------- rendered output surf: %d", vdpau->sourceIdx);
-//  CLog::Log(LOGNOTICE,"-------- pts: %f", vdpau->DVDPic.pts);
   fields[0][1].id = vdpau->texture[0];
 
   m_eventTexturesDone[index]->Set();
@@ -2411,13 +2406,10 @@ void CLinuxRendererGL::UploadVDPAUTexture420(int index)
   YUVFIELDS &fields = m_buffers[index].fields;
   YUVPLANE &plane = fields[0][0];
 
-  if (!vdpau)
+  if (!vdpau || !vdpau->valid)
   {
-    fields[1][0].id = plane.id;
-    fields[1][1].id = plane.id;
-    fields[2][0].id = plane.id;
-    fields[2][1].id = plane.id;
     m_eventTexturesDone[index]->Set();
+    m_skipRender = true;
     return;
   }
 
@@ -2478,7 +2470,6 @@ void CLinuxRendererGL::UploadVDPAUTexture420(int index)
   m_eventTexturesDone[index]->Set();
 #endif
 }
-
 
 void CLinuxRendererGL::DeleteVAAPITexture(int index)
 {
@@ -2610,7 +2601,7 @@ void CLinuxRendererGL::UploadVAAPITexture(int index)
   || status == VA_STATUS_ERROR_INVALID_DISPLAY)
   {
     va.display->lost(true);
-    for(int i = 0; i < NUM_BUFFERS; i++)
+    for(int i = 0; i < m_NumYV12Buffers; i++)
     {
       m_buffers[i].vaapi.display.reset();
       m_buffers[i].vaapi.surface.reset();
