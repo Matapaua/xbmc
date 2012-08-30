@@ -822,8 +822,6 @@ int CDVDVideoCodecFFmpeg::FilterProcess(AVFrame* frame)
 {
   int result, frames;
 
-  m_pFilterLink = m_pFilterOut->inputs[0];
-
   if (frame)
   {
     result = m_dllAvFilter.av_vsrc_buffer_add_frame(m_pFilterIn, frame, 0);
