@@ -577,7 +577,7 @@ void CGUIWindowSettingsCategory::UpdateSettings()
         g_guiSettings.SetBool("videoplayer.usevdpauinteropyuv",false);
       }
     }
-    else if (strSetting.Equals("videoplayer.usevdpauinteroprgb"))
+    else if (strSetting.Equals("videoplayer.usevdpauinterop"))
     {
       bool hasInterop = false;
 #ifdef GL_NV_vdpau_interop
@@ -591,7 +591,7 @@ void CGUIWindowSettingsCategory::UpdateSettings()
       else
       {
         pControl->SetEnabled(false);
-        g_guiSettings.SetBool("videoplayer.usevdpauinteroprgb",false);
+        g_guiSettings.SetBool("videoplayer.usevdpauinterop",false);
       }
     }
     else

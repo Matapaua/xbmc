@@ -95,10 +95,8 @@ CDecoder::CDecoder() : m_vdpauOutput(&m_inMsgEvent)
   m_vdpauConfig.videoSurfaces = &m_videoSurfaces;
   m_vdpauConfig.videoSurfaceSec = &m_videoSurfaceSec;
 
-  m_picAge.b_age    = m_picAge.ip_age[0] = m_picAge.ip_age[1] = 256*256*256*64;
   m_vdpauConfigured = false;
   m_DisplayState = VDPAU_OPEN;
-  m_speed = DVD_PLAYSPEED_NORMAL;
 }
 
 bool CDecoder::Open(AVCodecContext* avctx, const enum PixelFormat, unsigned int surfaces)
@@ -252,13 +250,6 @@ long CDecoder::ReleasePicReference()
 
 void CDecoder::SetWidthHeight(int width, int height)
 {
-  int vdpauMaxHeight = g_advancedSettings.m_videoVDPAUmaxHeight;
-  if (vdpauMaxHeight > 0 && height > vdpauMaxHeight)
-  {
-    width = MathUtils::round_int((double)width * vdpauMaxHeight / height);
-    height = vdpauMaxHeight;
-  }
-
   m_vdpauConfig.upscale = g_advancedSettings.m_videoVDPAUScaling;
 
   //pick the smallest dimensions, so we downscale with vdpau and upscale with opengl when appropriate
@@ -282,7 +273,7 @@ void CDecoder::SetWidthHeight(int width, int height)
     m_vdpauConfig.outWidth = width;
     m_vdpauConfig.outHeight = height;
   }
-  CLog::Log(LOGDEBUG, "CVDPAU::SetWidthHeight Setting OutWidth: %i OutHeight: %i vdpauMaxHeight: %i", m_vdpauConfig.outWidth, m_vdpauConfig.outHeight, vdpauMaxHeight);
+  CLog::Log(LOGDEBUG, "CVDPAU::SetWidthHeight Setting OutWidth: %i OutHeight: %i", m_vdpauConfig.outWidth, m_vdpauConfig.outHeight);
 }
 
 void CDecoder::OnLostDevice()
@@ -710,7 +701,6 @@ int CDecoder::FFGetBuffer(AVCodecContext *avctx, AVFrame *pic)
   //CLog::Log(LOGNOTICE,"%s",__FUNCTION__);
   CDVDVideoCodecFFmpeg* ctx        = (CDVDVideoCodecFFmpeg*)avctx->opaque;
   CDecoder*             vdp        = (CDecoder*)ctx->GetHardware();
-  struct PictureAge*    pA         = &vdp->m_picAge;
 
   // while we are waiting to recover we can't do anything
   CSingleLock lock(vdp->m_DecoderSection);
@@ -777,18 +767,6 @@ int CDecoder::FFGetBuffer(AVCodecContext *avctx, AVFrame *pic)
 
   pic->linesize[0] = pic->linesize[1] =  pic->linesize[2] = 0;
 
-  if(pic->reference)
-  {
-    pA->ip_age[0]= pA->ip_age[1]+1;
-    pA->ip_age[1]= 1;
-    pA->b_age++;
-  }
-  else
-  {
-    pA->ip_age[0]++;
-    pA->ip_age[1]++;
-    pA->b_age = 1;
-  }
   pic->type= FF_BUFFER_TYPE_USER;
 
   render->state |= FF_VDPAU_STATE_USED_FOR_REFERENCE;
@@ -937,11 +915,7 @@ int CDecoder::Decode(AVCodecContext *avctx, AVFrame *pFrame, bool bSoftDrain, bo
     m_bufferStats.IncDecoded();
     m_vdpauOutput.m_dataPort.SendOutMessage(COutputDataProtocol::NEWFRAME, &pic, sizeof(pic));
 
-    m_codecControl = pic.DVDPic.iFlags & (DVP_FLAG_DRAIN | DVP_FLAG_SKIP_PROC);
-    if (m_codecControl & DVP_FLAG_SKIP_PROC)
-    {
-      m_bufferStats.SetCmd(DVP_FLAG_SKIP_PROC);
-    }
+    m_codecControl = pic.DVDPic.iFlags & (DVP_FLAG_DRAIN | DVP_FLAG_NO_POSTPROC);
   }
 
   int retval = 0;
@@ -1017,7 +991,7 @@ int CDecoder::Decode(AVCodecContext *avctx, AVFrame *pFrame, bool bSoftDrain, bo
   uint64_t diff = CurrentHostCounter() - startTime;
   if (retval & VC_PICTURE)
   {
-    m_bufferStats.SetParams(diff, m_speed);
+    m_bufferStats.SetParams(diff, m_codecControl);
   }
   if (diff*1000/CurrentHostFrequency() > 50)
     CLog::Log(LOGDEBUG,"CVDPAU::Decode long wait: %d", (int)((diff*1000)/CurrentHostFrequency()));
@@ -1077,11 +1051,6 @@ void CDecoder::Reset()
 bool CDecoder::CanSkipDeint()
 {
   return m_bufferStats.CanSkipDeint();
-}
-
-void CDecoder::SetSpeed(int speed)
-{
-  m_speed = speed;
 }
 
 void CDecoder::ReturnRenderPicture(CVdpauRenderPicture *renderPic)
@@ -1150,7 +1119,6 @@ void CVdpauRenderPicture::ReturnUnused()
   if (vdpau)
     vdpau->ReturnRenderPicture(this);
 }
-
 //-----------------------------------------------------------------------------
 // Mixer
 //-----------------------------------------------------------------------------
@@ -1847,7 +1815,7 @@ void CMixer::SetDeinterlacing()
   {
     if (method == VS_INTERLACEMETHOD_AUTO)
     {
-      VdpBool enabled[] = {1,1,0};
+      VdpBool enabled[] = {1,0,0};
       if (g_advancedSettings.m_videoVDPAUtelecine)
         enabled[2] = 1;
       vdp_st = m_config.vdpProcs.vdp_video_mixer_set_feature_enables(m_videoMixer, ARSIZE(feature), feature, enabled);
@@ -2127,10 +2095,10 @@ void CMixer::InitCycle()
 {
   CheckFeatures();
   uint64_t latency;
-  int speed;
-  m_config.stats->GetParams(latency, speed);
+  int flags;
+  m_config.stats->GetParams(latency, flags);
   latency = (latency*1000)/CurrentHostFrequency();
-  if (speed != DVD_PLAYSPEED_NORMAL)
+  if (flags & DVP_FLAG_NO_POSTPROC)
     SetPostProcFeatures(false);
   else
     SetPostProcFeatures(true);
@@ -2247,14 +2215,6 @@ void CMixer::ProcessPicture()
 {
   if (m_processPicture.DVDPic.format == DVDVideoPicture::FMT_VDPAU_420)
     return;
-
-  int cmd = 0;
-  m_config.stats->GetCmd(cmd);
-  if (cmd & DVP_FLAG_SKIP_PROC)
-  {
-    m_processPicture.DVDPic.iFlags |= DVP_FLAG_DROPPED;
-    return;
-  }
 
   VdpStatus vdp_st;
 
@@ -3222,7 +3182,7 @@ bool COutput::GLInit()
   glVDPAUGetSurfaceivNV = NULL;
 #endif
 
-  m_config.usePixmaps = !g_guiSettings.GetBool("videoplayer.usevdpauinteroprgb");
+  m_config.usePixmaps = !g_guiSettings.GetBool("videoplayer.usevdpauinterop");
 
 #ifdef GL_NV_vdpau_interop
   if (glewIsSupported("GL_NV_vdpau_interop"))
@@ -3254,7 +3214,7 @@ bool COutput::GLInit()
 #endif
   {
     m_config.usePixmaps = true;
-    g_guiSettings.SetBool("videoplayer.usevdpauinteroprgb",false);
+    g_guiSettings.SetBool("videoplayer.usevdpauinterop",false);
     g_guiSettings.SetBool("videoplayer.usevdpauinteropyuv",false);
   }
   if (!glXBindTexImageEXT)
@@ -3537,6 +3497,5 @@ bool COutput::DestroyGlxContext()
 
   return true;
 }
-
 
 #endif

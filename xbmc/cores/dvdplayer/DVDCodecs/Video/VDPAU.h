@@ -508,12 +508,6 @@ class CDecoder
 
 public:
 
-  struct PictureAge
-  {
-    int b_age;
-    int ip_age[2];
-  };
-
   struct Desc
   {
     const char *name;
@@ -532,7 +526,6 @@ public:
   virtual void Close();
   virtual long Release();
   virtual bool CanSkipDeint();
-  virtual void SetSpeed(int speed);
 
   virtual int  Check(AVCodecContext* avctx);
   virtual const std::string Name() { return "vdpau"; }
@@ -591,16 +584,13 @@ protected:
   CVdpauConfig  m_vdpauConfig;
   std::vector<vdpau_render_state*> m_videoSurfaces;
   CCriticalSection m_videoSurfaceSec;
-  PictureAge    m_picAge;
 
   COutput       m_vdpauOutput;
   CVdpauBufferStats m_bufferStats;
   CEvent        m_inMsgEvent;
   CVdpauRenderPicture *m_presentPicture;
 
-  int m_speed;
   int m_codecControl;
 };
 
 }
-
