@@ -123,6 +123,18 @@ CVideoReferenceClock::CVideoReferenceClock() : CThread("CVideoReferenceClock")
 #endif
 }
 
+CVideoReferenceClock::~CVideoReferenceClock()
+{
+#if defined(HAS_GLX)
+  // some ATI voodoo, if we don't close the display, we crash on exit
+  if (m_Dpy)
+  {
+    XCloseDisplay(m_Dpy);
+    m_Dpy = NULL;
+  }
+#endif
+}
+
 void CVideoReferenceClock::Process()
 {
   bool SetupSuccess = false;
