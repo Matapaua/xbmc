@@ -237,9 +237,9 @@ bool CXBMCRenderManager::Configure(unsigned int width, unsigned int height, unsi
 
   // check if decoder supports buffering
   m_bCodecSupportsBuffering = false;
-  if (format == DVDVideoPicture::FMT_VDPAU
-     || format == DVDVideoPicture::FMT_VDPAU_420
-     || format == DVDVideoPicture::FMT_XVBA)
+  if ((flags & DVDVideoPicture::FMT_VDPAU)
+     || (flags & DVDVideoPicture::FMT_VDPAU_420)
+     || (flags & DVDVideoPicture::FMT_XVBA))
     m_bCodecSupportsBuffering = true;
 
   bool result = m_pRenderer->Configure(width, height, d_width, d_height, fps, flags, format);
