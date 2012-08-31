@@ -21,6 +21,7 @@
 
 #include "system.h"
 #ifdef HAVE_LIBXVBA
+
 #include <dlfcn.h>
 #include <string>
 #include "XVBA.h"
@@ -460,7 +461,6 @@ bool CDecoder::Open(AVCodecContext* avctx, const enum PixelFormat fmt, unsigned 
   m_xvbaBufferPool.data_buffer = 0;
   m_xvbaBufferPool.iq_matrix_buffer = 0;
   m_xvbaBufferPool.picture_descriptor_buffer = 0;
-  picAge.b_age = picAge.ip_age[0] = picAge.ip_age[1] = 256*256*256*64;
   m_presentPicture = 0;
   m_xvbaConfig.numRenderBuffers = surfaces;
   m_decoderThread = CThread::GetCurrentThreadId();
@@ -573,8 +573,6 @@ bool CDecoder::Supports(EINTERLACEMETHOD method)
 
 void CDecoder::ResetState()
 {
-  picAge.b_age = picAge.ip_age[0] = picAge.ip_age[1] = 256*256*256*64;
-
   m_displayState = XVBA_OPEN;
 }
 
@@ -730,6 +728,40 @@ bool CDecoder::CreateSession(AVCodecContext* avctx)
 
 void CDecoder::DestroySession()
 {
+  // wait for unfinished decoding jobs
+  XbmcThreads::EndTime timer;
+  if (m_xvbaConfig.xvbaSession)
+  {
+    for (unsigned int i = 0; i < m_videoSurfaces.size(); ++i)
+    {
+      xvba_render_state *render = m_videoSurfaces[i];
+      if (render->surface)
+      {
+        XVBA_Surface_Sync_Input syncInput;
+        XVBA_Surface_Sync_Output syncOutput;
+        syncInput.size = sizeof(syncInput);
+        syncInput.session = m_xvbaConfig.xvbaSession;
+        syncInput.surface = render->surface;
+        syncInput.query_status = XVBA_GET_SURFACE_STATUS;
+        syncOutput.size = sizeof(syncOutput);
+        timer.Set(1000);
+        while(!timer.IsTimePast())
+        {
+          if (Success != g_XVBA_vtable.SyncSurface(&syncInput, &syncOutput))
+          {
+            CLog::Log(LOGERROR,"XVBA::DestroySession - failed sync surface");
+            break;
+          }
+          if (!(syncOutput.status_flags & XVBA_STILL_PENDING))
+            break;
+          Sleep(10);
+        }
+        if (timer.IsTimePast())
+          CLog::Log(LOGERROR,"XVBA::DestroySession - unfinished decoding job");
+      }
+    }
+  }
+
   m_xvbaOutput.Dispose();
 
   XVBA_Destroy_Decode_Buffers_Input bufInput;
@@ -1052,7 +1084,6 @@ int CDecoder::FFGetBuffer(AVCodecContext *avctx, AVFrame *pic)
 {
   CDVDVideoCodecFFmpeg* ctx   = (CDVDVideoCodecFFmpeg*)avctx->opaque;
   CDecoder*             xvba  = (CDecoder*)ctx->GetHardware();
-  struct pictureAge*    pA    = &xvba->picAge;
 
   pic->data[0] =
   pic->data[1] =
@@ -1133,20 +1164,6 @@ int CDecoder::FFGetBuffer(AVCodecContext *avctx, AVFrame *pic)
 
   pic->data[0] = (uint8_t*)render;
 
-  if(pic->reference)
-  {
-    pic->age = pA->ip_age[0];
-    pA->ip_age[0]= pA->ip_age[1]+1;
-    pA->ip_age[1]= 1;
-    pA->b_age++;
-  }
-  else
-  {
-    pic->age = pA->b_age;
-    pA->ip_age[0]++;
-    pA->ip_age[1]++;
-    pA->b_age = 1;
-  }
   pic->type= FF_BUFFER_TYPE_USER;
 
   render->state |= FF_XVBA_STATE_USED_FOR_REFERENCE;
@@ -1198,11 +1215,7 @@ int CDecoder::Decode(AVCodecContext* avctx, AVFrame* frame)
     m_bufferStats.IncDecoded();
     m_xvbaOutput.m_dataPort.SendOutMessage(COutputDataProtocol::NEWFRAME, &pic, sizeof(pic));
 
-    m_codecControl = pic.DVDPic.iFlags & (DVP_FLAG_DRAIN | DVP_FLAG_SKIP_PROC);
-    if (m_codecControl & DVP_FLAG_SKIP_PROC)
-    {
-      m_bufferStats.SetCmd(DVP_FLAG_SKIP_PROC);
-    }
+    m_codecControl = pic.DVDPic.iFlags & (DVP_FLAG_DRAIN | DVP_FLAG_NO_POSTPROC);
   }
 
   int retval = 0;
@@ -2328,7 +2341,7 @@ bool COutput::CreateGlxContext()
   XFree(visuals);
 
   m_pixmap = XCreatePixmap(m_Display,
-                           DefaultRootWindow(m_Display),
+                           m_Window,
                            192,
                            108,
                            visInfo.depth);

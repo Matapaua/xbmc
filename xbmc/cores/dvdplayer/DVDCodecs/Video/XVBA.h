@@ -33,7 +33,6 @@
 #include "libavcodec/xvba.h"
 #include "utils/ActorProtocol.h"
 #include "settings/VideoSettings.h"
-#include <GL/gl.h>
 #include <GL/glx.h>
 #include <vector>
 #include <deque>
@@ -371,8 +370,6 @@ protected:
     std::vector<XVBABufferDescriptor*> data_control_buffers;
   };
   XVBABufferPool m_xvbaBufferPool;
-
-  pictureAge picAge;
 
   COutput       m_xvbaOutput;
   CXvbaBufferStats m_bufferStats;
