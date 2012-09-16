@@ -3455,14 +3455,7 @@ bool CLinuxRendererGL::Supports(ESCALINGMETHOD method)
 EINTERLACEMETHOD CLinuxRendererGL::AutoInterlaceMethod()
 {
   if(m_renderMethod & RENDER_VDPAU)
-  {
-#ifdef HAVE_LIBVDPAU
-    VDPAU::CVdpauRenderPicture *vdpauPic = m_buffers[m_iYV12RenderBuffer].vdpau;
-    if(vdpauPic && vdpauPic->vdpau)
-      return vdpauPic->vdpau->AutoInterlaceMethod();
-#endif
     return VS_INTERLACEMETHOD_NONE;
-  }
 
   if(Supports(VS_INTERLACEMETHOD_RENDER_BOB))
     return VS_INTERLACEMETHOD_RENDER_BOB;
