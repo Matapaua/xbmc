@@ -965,8 +965,9 @@ void CXBMCRenderManager::PrepareNextRender()
     presenttime = clocktime + MAXPRESENTDELAY;
 
   m_sleeptime = presenttime - clocktime;
+  double frametime = 1 / g_graphicsContext.GetFPS();
 
-  if (g_graphicsContext.IsFullScreenVideo() || presenttime <= clocktime+0.01)
+  if (g_graphicsContext.IsFullScreenVideo() || presenttime <= clocktime + frametime)
   {
     m_presentPts = m_renderBuffers[idx].pts;
     m_presenttime = presenttime;
