@@ -3160,22 +3160,24 @@ void CDVDPlayer::FlushBuffers(bool queued, double pts, bool accurate, bool sync)
   if (sync)
   {
     m_CurrentAudio.inited      = false;
+    m_CurrentAudio.dts         = DVD_NOPTS_VALUE;
+    m_CurrentAudio.startpts    = startpts;
+
     m_CurrentVideo.inited      = false;
+    m_CurrentVideo.dts         = DVD_NOPTS_VALUE;
+    m_CurrentVideo.startpts    = startpts;
+
     m_CurrentSubtitle.inited   = false;
+    m_CurrentSubtitle.dts      = DVD_NOPTS_VALUE;
+    m_CurrentSubtitle.startpts = startpts;
+
     m_CurrentTeletext.inited   = false;
+    m_CurrentTeletext.dts      = DVD_NOPTS_VALUE;
+    m_CurrentTeletext.startpts = startpts;
+
+    m_CurrentVideo.displayTime.m_pts = DVD_NOPTS_VALUE;
+    m_CurrentAudio.displayTime.m_pts = DVD_NOPTS_VALUE;
   }
-
-  m_CurrentAudio.dts         = DVD_NOPTS_VALUE;
-  m_CurrentAudio.startpts    = startpts;
-
-  m_CurrentVideo.dts         = DVD_NOPTS_VALUE;
-  m_CurrentVideo.startpts    = startpts;
-
-  m_CurrentSubtitle.dts      = DVD_NOPTS_VALUE;
-  m_CurrentSubtitle.startpts = startpts;
-
-  m_CurrentTeletext.dts      = DVD_NOPTS_VALUE;
-  m_CurrentTeletext.startpts = startpts;
 
   if(queued)
   {
