@@ -23,6 +23,7 @@
 #include "AddonDll.h"
 #include "cores/IAudioCallback.h"
 #include "include/xbmc_vis_types.h"
+#include "guilib/IRenderingCallback.h"
 
 #include <map>
 #include <list>
@@ -52,6 +53,7 @@ namespace ADDON
 {
   class CVisualisation : public CAddonDll<DllVisualisation, Visualisation, VIS_PROPS>
                        , public IAudioCallback
+                       , public IRenderingCallback
   {
   public:
     CVisualisation(const ADDON::AddonProps &props) : CAddonDll<DllVisualisation, Visualisation, VIS_PROPS>(props) {}
