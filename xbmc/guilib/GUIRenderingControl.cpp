@@ -22,6 +22,7 @@
 #include "GUIUserMessages.h"
 #include "threads/SingleLock.h"
 #include "guilib/IRenderingCallback.h"
+#include "windowing/WindowingFactory.h"
 
 using namespace std;
 
@@ -60,7 +61,11 @@ bool CGUIRenderingControl::InitAddon(IRenderingCallback *callback)
   if (y + h > g_graphicsContext.GetHeight()) h = g_graphicsContext.GetHeight() - y;
 
 //  VizPtr viz = boost::dynamic_pointer_cast<CVisualisation>(addon);
-  if (callback->Create((int)(x+0.5f), (int)(y+0.5f), (int)(w+0.5f), (int)(h+0.5f)))
+  void *device = NULL;
+#if HAS_DX
+  device = g_Windowing.Get3DDevice();
+#endif
+  if (callback->Create((int)(x+0.5f), (int)(y+0.5f), (int)(w+0.5f), (int)(h+0.5f), device))
     m_callback = callback;
   else
     return false;
