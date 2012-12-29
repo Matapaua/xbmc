@@ -351,7 +351,8 @@ static const ActionMapping windows[] =
         {"peripherals"              , WINDOW_DIALOG_PERIPHERAL_MANAGER},
         {"peripheralsettings"       , WINDOW_DIALOG_PERIPHERAL_SETTINGS},
         {"extendedprogressdialog"   , WINDOW_DIALOG_EXT_PROGRESS},
-        {"mediafilter"              , WINDOW_DIALOG_MEDIA_FILTER}};
+        {"mediafilter"              , WINDOW_DIALOG_MEDIA_FILTER},
+        {"addon"                    , WINDOW_ADDON_START}};
 
 static const ActionMapping mousecommands[] =
 {
@@ -910,6 +911,9 @@ CAction CButtonTranslator::GetAction(int window, const CKey &key, bool fallback)
   CStdString strAction;
   // try to get the action from the current window
   int actionID = GetActionCode(window, key, strAction);
+  // for addon windows check WINDOW_ADDON_START
+  if (actionID == 0 && (window >= WINDOW_ADDON_START && window <= WINDOW_ADDON_END))
+    actionID = GetActionCode(WINDOW_ADDON_START, key, strAction);
   // if it's invalid, try to get it from the global map
   if (actionID == 0 && fallback)
     actionID = GetActionCode( -1, key, strAction);
