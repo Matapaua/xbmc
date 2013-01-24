@@ -28,6 +28,7 @@
 #include "threads/Condition.h"
 #include "threads/SystemClock.h"
 #include "utils/MathUtils.h"
+#include "DVDInputStreams/DVDInputStream.h"
 
 class CDVDMsgGeneralSynchronizePriv
 {
@@ -118,4 +119,18 @@ CDVDMsgDemuxerPacket::~CDVDMsgDemuxerPacket()
 {
   if (m_packet)
     CDVDDemuxUtils::FreeDemuxPacket(m_packet);
+}
+
+/**
+ * CDVDMsgPlayerDisplayTime --- PLAYER_DISPLAYTIME
+ */
+CDVDMsgPlayerDisplayTime::CDVDMsgPlayerDisplayTime(DisplayTime *displayTime) : CDVDMsg(PLAYER_DISPLAYTIME)
+{
+  m_displayTime = displayTime;
+}
+
+CDVDMsgPlayerDisplayTime::~CDVDMsgPlayerDisplayTime()
+{
+  if (m_displayTime)
+    delete m_displayTime;
 }

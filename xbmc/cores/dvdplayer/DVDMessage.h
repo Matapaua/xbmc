@@ -73,11 +73,12 @@ public:
     PLAYER_CHANNEL_SELECT,          // switches to the provided channel
     PLAYER_STARTED,                 // sent whenever a sub player has finished it's first frame after open
 
+    PLAYER_DISPLAYTIME,             // display time struct from av players
+
     // demuxer related messages
 
     DEMUXER_PACKET,                 // data packet
     DEMUXER_RESET,                  // reset the demuxer
-
 
     // video related messages
 
@@ -260,6 +261,17 @@ class CDVDMsgPlayerSeekChapter : public CDVDMsg
     int m_iChapter;
 };
 
+struct DisplayTime;
+class CDVDMsgPlayerDisplayTime : public CDVDMsg
+{
+public:
+  CDVDMsgPlayerDisplayTime(DisplayTime *displayTime);
+  virtual ~CDVDMsgPlayerDisplayTime();
+  DisplayTime *GetTime() { return m_displayTime; }
+private:
+  DisplayTime *m_displayTime;
+};
+
 ////////////////////////////////////////////////////////////////////////////////
 //////
 ////// DEMUXER_ Messages
@@ -283,8 +295,6 @@ class CDVDMsgDemuxerReset : public CDVDMsg
 public:
   CDVDMsgDemuxerReset() : CDVDMsg(DEMUXER_RESET)  {}
 };
-
-
 
 ////////////////////////////////////////////////////////////////////////////////
 //////
