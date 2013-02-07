@@ -3849,16 +3849,18 @@ int CDVDPlayer::AddSubtitleFile(const std::string& filename, const std::string& 
 
 void CDVDPlayer::UpdatePlayState(double timeout)
 {
-  if(m_StateInput.timestamp != 0
-  && m_StateInput.timestamp + DVD_MSEC_TO_TIME(timeout) > CDVDClock::GetAbsoluteClock())
-    return;
-
   SPlayerState state(m_StateInput);
 
   if     (m_CurrentVideo.dts != DVD_NOPTS_VALUE)
     state.dts = m_CurrentVideo.dts;
   else if(m_CurrentAudio.dts != DVD_NOPTS_VALUE)
     state.dts = m_CurrentAudio.dts;
+
+  if(state.dts_state != DVD_NOPTS_VALUE
+  && (abs(state.dts - state.dts_state) < DVD_MSEC_TO_TIME(timeout)))
+    return;
+
+  state.dts_state = state.dts;
 
   if(m_pDemuxer)
   {
