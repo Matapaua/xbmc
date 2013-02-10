@@ -158,6 +158,8 @@ bool OMXPlayerVideo::OpenStream(CDVDStreamInfo &hints)
   m_open        = true;
   m_send_eos    = false;
 
+  g_renderManager.EnableBuffering(false);
+
   return true;
 }
 
@@ -358,7 +360,7 @@ void OMXPlayerVideo::Output(int iGroupId, double pts, bool bDropPacket)
 
     if(!g_renderManager.Configure(m_hints.width, m_hints.height,
           iDisplayWidth, iDisplayHeight, m_fps, flags, format, 0,
-          m_hints.orientation))
+          m_hints.orientation, true))
     {
       CLog::Log(LOGERROR, "%s - failed to configure renderer", __FUNCTION__);
       return;
@@ -452,13 +454,22 @@ void OMXPlayerVideo::Output(int iGroupId, double pts, bool bDropPacket)
   m_dropbase = 0.0f;
 #endif
 
-  double pts_media = m_av_clock->OMXMediaTime(false, false);
-  ProcessOverlays(iGroupId, pts_media);
-
   if (!CThread::m_bStop && m_av_clock->GetAbsoluteClock(false) < (iCurrentClock + iSleepTime + DVD_MSEC_TO_TIME(500)) )
     return;
 
-  g_renderManager.FlipPage(CThread::m_bStop, (iCurrentClock + iSleepTime) / DVD_TIME_BASE, -1, FS_NONE);
+  int buffer = g_renderManager.WaitForBuffer(m_bStop);
+  while (buffer < 0 && !CThread::m_bStop)
+  {
+    Sleep(1);
+    buffer = g_renderManager.WaitForBuffer(m_bStop);
+  }
+  if (buffer < 0)
+    return;
+
+  double pts_media = m_av_clock->OMXMediaTime(false, false);
+  ProcessOverlays(iGroupId, pts_media);
+
+  g_renderManager.FlipPage(CThread::m_bStop, pts, -1, FS_NONE, m_speed);
 
   //m_av_clock->WaitAbsoluteClock((iCurrentClock + iSleepTime));
 }
@@ -569,6 +580,7 @@ void OMXPlayerVideo::Process()
       m_av_clock->OMXReset(false);
       m_av_clock->UnLock();
       m_started = false;
+      g_renderManager.EnableBuffering(false);
     }
     else if (pMsg->IsType(CDVDMsg::GENERAL_FLUSH)) // private message sent by (COMXPlayerVideo::Flush())
     {
@@ -580,6 +592,7 @@ void OMXPlayerVideo::Process()
       m_omxVideo.Reset();
       m_av_clock->OMXReset(false);
       m_av_clock->UnLock();
+      g_renderManager.EnableBuffering(false);
     }
     else if (pMsg->IsType(CDVDMsg::PLAYER_SETSPEED))
     {
@@ -664,6 +677,7 @@ void OMXPlayerVideo::Process()
           m_codecname = m_omxVideo.GetDecoderName();
           m_started = true;
           m_messageParent.Put(new CDVDMsgInt(CDVDMsg::PLAYER_STARTED, DVDPLAYER_VIDEO));
+          g_renderManager.EnableBuffering(true);
         }
 
         // guess next frame pts. iDuration is always valid

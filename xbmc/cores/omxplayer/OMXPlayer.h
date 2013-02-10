@@ -332,6 +332,8 @@ public:
   virtual void  GetScalingMethods(std::vector<int> &scalingMethods);
   virtual void  GetAudioCapabilities(std::vector<int> &audioCaps);
   virtual void  GetSubtitleCapabilities(std::vector<int> &subCaps);
+
+  virtual double GetClock(double& absolute, bool interpolated = true);
 protected:
   friend class COMXSelectionStreams;
 
