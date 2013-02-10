@@ -463,7 +463,7 @@ bool CDVDPlayer::OpenFile(const CFileItem& file, const CPlayerOptions &options)
     m_ready.Reset();
 
 #if defined(HAS_VIDEO_PLAYBACK)
-    g_renderManager.PreInit(&m_clock);
+    g_renderManager.PreInit();
 #endif
 
     Create();
@@ -4128,4 +4128,9 @@ bool CDVDPlayer::CachePVRStream(void) const
   return m_pInputStream->IsStreamType(DVDSTREAM_TYPE_PVRMANAGER) &&
       !g_PVRManager.IsPlayingRecording() &&
       g_advancedSettings.m_bPVRCacheInDvdPlayer;
+}
+
+double CDVDPlayer::GetClock(double& absolute, bool interpolated)
+{
+  return m_clock.GetClock(absolute, interpolated);
 }

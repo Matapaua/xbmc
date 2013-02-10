@@ -72,7 +72,7 @@ public:
   int AddVideoPicture(DVDVideoPicture& picture);
 
   void FlipPage(volatile bool& bStop, double timestamp = 0.0, int source = -1, EFIELDSYNC sync = FS_NONE, int speed = 0);
-  unsigned int PreInit(CDVDClock *pClock);
+  unsigned int PreInit();
   void UnInit();
   bool Flush();
 
@@ -225,7 +225,6 @@ protected:
   int        m_presentsource;
   CEvent     m_presentevent;
   CEvent     m_flushEvent;
-  CDVDClock  *m_pClock;
 
 
   OVERLAY::CRenderer m_overlays;

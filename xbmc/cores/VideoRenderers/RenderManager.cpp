@@ -325,7 +325,7 @@ void CXBMCRenderManager::RenderUpdate(bool clear, DWORD flags, DWORD alpha)
   m_presentevent.Set();
 }
 
-unsigned int CXBMCRenderManager::PreInit(CDVDClock *pClock)
+unsigned int CXBMCRenderManager::PreInit()
 {
   CRetakeLock<CExclusiveLock> lock(m_sharedSection);
 
@@ -333,7 +333,6 @@ unsigned int CXBMCRenderManager::PreInit(CDVDClock *pClock)
   m_presenterr  = 0.0;
   m_errorindex  = 0;
   memset(m_errorbuff, 0, sizeof(m_errorbuff));
-  m_pClock = pClock;
 
   m_bIsStarted = false;
   m_bPauseDrawing = false;
@@ -1045,7 +1044,11 @@ void CXBMCRenderManager::PrepareNextRender()
   }
 
   double iClockSleep, iPlayingClock, iCurrentClock;
-  iPlayingClock = m_pClock->GetClock(iCurrentClock, false);
+  if (g_application.m_pPlayer)
+    iPlayingClock = g_application.m_pPlayer->GetClock(iCurrentClock, false);
+  else
+    iPlayingClock = iCurrentClock = 0;
+
   iClockSleep = m_renderBuffers[idx].pts - iPlayingClock;
 
   if (m_speed)
