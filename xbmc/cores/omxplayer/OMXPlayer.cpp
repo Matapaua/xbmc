@@ -4210,4 +4210,10 @@ void COMXPlayer::GetSubtitleCapabilities(std::vector<int> &subCaps)
   subCaps.push_back(IPC_SUBS_ALL);
 }
 
+double COMXPlayer::GetClock(double& absolute, bool interpolated)
+{
+  m_av_clock.GetClock(absolute, interpolated);
+  return m_av_clock.OMXMediaTime(false, false);
+}
+
 #endif
