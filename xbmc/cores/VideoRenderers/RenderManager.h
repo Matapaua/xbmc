@@ -66,7 +66,7 @@ public:
   void SetViewMode(int iViewMode);
 
   // Functions called from mplayer
-  bool Configure(unsigned int width, unsigned int height, unsigned int d_width, unsigned int d_height, float fps, unsigned flags, ERenderFormat format, unsigned extended_format,  unsigned int orientation);
+  bool Configure(unsigned int width, unsigned int height, unsigned int d_width, unsigned int d_height, float fps, unsigned flags, ERenderFormat format, unsigned extended_format,  unsigned int orientation, bool buffering);
   bool IsConfigured();
 
   int AddVideoPicture(DVDVideoPicture& picture);
@@ -79,7 +79,7 @@ public:
   void AddOverlay(CDVDOverlay* o, double pts)
   {
     CSharedLock lock(m_sharedSection);
-    m_overlays.AddOverlay(o, pts);
+    m_overlays.AddOverlay(o, pts, (m_iOutputRenderBuffer + 1) % m_iNumRenderBuffers);
   }
 
   void AddCleanup(OVERLAY::COverlay* o)

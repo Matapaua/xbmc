@@ -1132,53 +1132,69 @@ int CDVDPlayerVideo::OutputPicture(const DVDVideoPicture* src, double pts)
     }
 
     CStdString formatstr;
+    bool buffering;
 
     switch(pPicture->format)
     {
       case RENDER_FMT_YUV420P:
         formatstr = "YV12";
+        buffering = true;
         break;
       case RENDER_FMT_YUV420P16:
         formatstr = "YV12P16";
+        buffering = true;
         break;
       case RENDER_FMT_YUV420P10:
         formatstr = "YV12P10";
+        buffering = true;
         break;
       case RENDER_FMT_NV12:
         formatstr = "NV12";
+        buffering = true;
         break;
       case RENDER_FMT_UYVY422:
         formatstr = "UYVY";
+        buffering = true;
         break;
       case RENDER_FMT_YUYV422:
         formatstr = "YUY2";
+        buffering = true;
         break;
       case RENDER_FMT_VDPAU:
         formatstr = "VDPAU";
+        buffering = true;
         break;
       case RENDER_FMT_VDPAU_420:
         formatstr = "VDPAU_420";
+        buffering = true;
         break;
       case RENDER_FMT_DXVA:
         formatstr = "DXVA";
+        buffering = false;
         break;
       case RENDER_FMT_VAAPI:
         formatstr = "VAAPI";
+        buffering = false;
         break;
       case RENDER_FMT_OMXEGL:
         formatstr = "OMXEGL";
+        buffering = false;
         break;
       case RENDER_FMT_CVBREF:
         formatstr = "BGRA";
+        buffering = false;
         break;
       case RENDER_FMT_BYPASS:
         formatstr = "BYPASS";
+        buffering = false;
         break;
       case RENDER_FMT_NONE:
         formatstr = "NONE";
+        buffering = false;
         break;
       case RENDER_FMT_XVBA:
         formatstr = "XVBA";
+        buffering = true;
         break;
     }
 
@@ -1189,7 +1205,7 @@ int CDVDPlayerVideo::OutputPicture(const DVDVideoPicture* src, double pts)
     }
 
     CLog::Log(LOGDEBUG,"%s - change configuration. %dx%d. framerate: %4.2f. format: %s",__FUNCTION__,pPicture->iWidth, pPicture->iHeight, config_framerate, formatstr.c_str());
-    if(!g_renderManager.Configure(pPicture->iWidth, pPicture->iHeight, pPicture->iDisplayWidth, pPicture->iDisplayHeight, config_framerate, flags, pPicture->format, pPicture->extended_format, m_hints.orientation))
+    if(!g_renderManager.Configure(pPicture->iWidth, pPicture->iHeight, pPicture->iDisplayWidth, pPicture->iDisplayHeight, config_framerate, flags, pPicture->format, pPicture->extended_format, m_hints.orientation, buffering))
     {
       CLog::Log(LOGERROR, "%s - failed to configure renderer", __FUNCTION__);
       return EOS_ABORT;

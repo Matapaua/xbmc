@@ -228,7 +228,7 @@ CStdString CXBMCRenderManager::GetVSyncState()
   return state;
 }
 
-bool CXBMCRenderManager::Configure(unsigned int width, unsigned int height, unsigned int d_width, unsigned int d_height, float fps, unsigned flags, ERenderFormat format, unsigned extended_format, unsigned int orientation)
+bool CXBMCRenderManager::Configure(unsigned int width, unsigned int height, unsigned int d_width, unsigned int d_height, float fps, unsigned flags, ERenderFormat format, unsigned extended_format, unsigned int orientation, bool buffering)
 {
   /* make sure any queued frame was fully presented */
   double timeout = m_presenttime + 0.1;
@@ -248,8 +248,8 @@ bool CXBMCRenderManager::Configure(unsigned int width, unsigned int height, unsi
     return false;
   }
 
-  // check if decoder supports buffering
-  m_bCodecSupportsBuffering = false;
+  // set buffering
+  m_bCodecSupportsBuffering = buffering;
   if (format == RENDER_FMT_VDPAU
      || format == RENDER_FMT_VDPAU_420
      || format == RENDER_FMT_XVBA)
@@ -958,10 +958,6 @@ int CXBMCRenderManager::WaitForBuffer(volatile bool& bStop)
     lock.Enter();
   }
   lock.Leave();
-
-  { CRetakeLock<CExclusiveLock> lock(m_sharedSection);
-    m_overlays.SetBuffer((m_iOutputRenderBuffer + 1) % m_iNumRenderBuffers);
-  }
 
   if (bStop)
     return -1;
