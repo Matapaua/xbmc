@@ -3252,6 +3252,11 @@ void CDVDPlayer::FlushBuffers(bool queued, double pts, bool accurate, bool sync)
     if(pts != DVD_NOPTS_VALUE && sync)
       m_clock.Discontinuity(pts);
     UpdatePlayState(0);
+
+    // update state, buffers are flushed and it may take some time until
+    // we get an update from players
+    CSingleLock lock(m_StateSection);
+    m_State = m_StateInput;
   }
 }
 
@@ -3875,22 +3880,18 @@ int CDVDPlayer::AddSubtitleFile(const std::string& filename, const std::string& 
 
 void CDVDPlayer::UpdatePlayState(double timeout)
 {
-  double dts;
-  if     (m_CurrentVideo.dts != DVD_NOPTS_VALUE)
-    dts = m_CurrentVideo.dts;
-  else if(m_CurrentAudio.dts != DVD_NOPTS_VALUE)
-    dts = m_CurrentAudio.dts;
-  else
-    dts = DVD_NOPTS_VALUE;
-
   if((m_StateInput.timestamp != 0)
      && (m_StateInput.timestamp + DVD_MSEC_TO_TIME(timeout) > CDVDClock::GetAbsoluteClock())
-     && (dts != DVD_NOPTS_VALUE)
-     && (abs(dts - m_StateInput.dts_state) < DVD_MSEC_TO_TIME(timeout)))
+     && (m_StateInput.dts != DVD_NOPTS_VALUE)
+     && (abs(m_StateInput.dts - m_StateInput.dts_state) < DVD_MSEC_TO_TIME(timeout)))
     return;
 
   SPlayerState state(m_StateInput);
-  state.dts = dts;
+
+  if     (m_CurrentVideo.dts != DVD_NOPTS_VALUE)
+    state.dts = m_CurrentVideo.dts;
+  else if(m_CurrentAudio.dts != DVD_NOPTS_VALUE)
+    state.dts = m_CurrentAudio.dts;
 
   if(m_pDemuxer)
   {
