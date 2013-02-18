@@ -159,6 +159,8 @@ bool OMXPlayerVideo::OpenStream(CDVDStreamInfo &hints)
   m_open        = true;
   m_send_eos    = false;
 
+  g_renderManager.EnableBuffering(false);
+
   return true;
 }
 
@@ -576,6 +578,7 @@ void OMXPlayerVideo::Process()
       m_av_clock->UnLock();
       m_started = false;
       m_iSleepEndTime = DVD_NOPTS_VALUE;
+      g_renderManager.EnableBuffering(false);
     }
     else if (pMsg->IsType(CDVDMsg::GENERAL_FLUSH)) // private message sent by (COMXPlayerVideo::Flush())
     {
@@ -588,6 +591,7 @@ void OMXPlayerVideo::Process()
       m_omxVideo.Reset();
       m_av_clock->OMXReset(false);
       m_av_clock->UnLock();
+      g_renderManager.EnableBuffering(false);
     }
     else if (pMsg->IsType(CDVDMsg::PLAYER_SETSPEED))
     {
@@ -672,6 +676,7 @@ void OMXPlayerVideo::Process()
           m_codecname = m_omxVideo.GetDecoderName();
           m_started = true;
           m_messageParent.Put(new CDVDMsgInt(CDVDMsg::PLAYER_STARTED, DVDPLAYER_VIDEO));
+          g_renderManager.EnableBuffering(true);
         }
 
         // guess next frame pts. iDuration is always valid
