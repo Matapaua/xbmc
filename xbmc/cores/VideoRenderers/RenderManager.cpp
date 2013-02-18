@@ -612,10 +612,12 @@ void CXBMCRenderManager::FlipPage(volatile bool& bStop, double timestamp /* = 0L
       }
     }
 
-    FlipFreeBuffer();
-    m_renderBuffers[m_iOutputRenderBuffer].pts = timestamp;
-    m_renderBuffers[m_iOutputRenderBuffer].presentfield = presentfield;
-    m_renderBuffers[m_iOutputRenderBuffer].presentmethod = presentmethod;
+    if (FlipFreeBuffer() >= 0)
+    {
+      m_renderBuffers[m_iOutputRenderBuffer].pts = timestamp;
+      m_renderBuffers[m_iOutputRenderBuffer].presentfield = presentfield;
+      m_renderBuffers[m_iOutputRenderBuffer].presentmethod = presentmethod;
+    }
     m_speed = speed;
   }
 
@@ -870,7 +872,15 @@ int CXBMCRenderManager::AddVideoPicture(DVDVideoPicture& pic)
 #endif
   m_pRenderer->ReleaseImage(index, false);
 
+  m_bRenderBufferUsed = true;
   return index;
+}
+
+void CXBMCRenderManager::AddOverlay(CDVDOverlay* o, double pts)
+{
+  CSharedLock lock(m_sharedSection);
+  m_overlays.AddOverlay(o, pts, (m_iOutputRenderBuffer + 1) % m_iNumRenderBuffers);
+  m_bRenderBufferUsed = true;
 }
 
 bool CXBMCRenderManager::Supports(ERENDERFEATURE feature)
@@ -973,10 +983,17 @@ int CXBMCRenderManager::FlipFreeBuffer()
   // See "Render Buffer State Description" in header for information.
   if (HasFreeBuffer())
   {
+    if (!m_bRenderBufferUsed)
+    {
+      return -1;
+    }
+    m_bRenderBufferUsed = false;
     m_bAllRenderBuffersDisplayed = false;
     m_iOutputRenderBuffer = (m_iOutputRenderBuffer + 1) % m_iNumRenderBuffers;
     return m_iOutputRenderBuffer;
   }
+  else
+    return -1;
 }
 
 bool CXBMCRenderManager::HasFreeBuffer()
@@ -1017,6 +1034,7 @@ void CXBMCRenderManager::ResetRenderBuffer()
   m_sleeptime = 1.0;
   m_presentPts = DVD_NOPTS_VALUE;
   m_speed = 0;
+  m_bRenderBufferUsed = false;
 }
 
 void CXBMCRenderManager::PrepareNextRender()
